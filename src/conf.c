@@ -19,7 +19,6 @@
 #include <time.h>
 #include "swephexp.h"
 #include "astro.h"
-#include "io.h"
 #include "ui.h"
 
 #define C_ASP 0

@@ -15,6 +15,7 @@
 
 #include <ncurses.h>
 #include <panel.h>
+#include <form.h>
 
 #define MAXBUF 1024
 #define MAXPATH 2048
@@ -119,8 +120,27 @@ struct cdata {
 	double se[EMAX]; // solar eclipse
 };
 
+#define CITY 0
+#define YEAR 1
+#define MONTH 2
+#define DAY 3
+#define HOUR 4
+#define MINUTE 5
+#define SECOND 6
+#define AMPM 7
+#define DRAW 8
+#define TIMEZONE 9
+#define LATITUDE 10
+#define LONGITUDE 11
+#define FIELDMAX 12
+
 void *ecalloc(size_t n, size_t size);
 void *erealloc(void *p, size_t size);
-void config_menu(struct cdata *cdata, struct ui *ui);
 void config_init(struct cdata *cdata, struct ui *ui);
+void config_menu(struct cdata *cdata, struct ui *ui);
+void in_cdata(struct cdata *cdata, struct pxx *pxx, struct ui *ui, double **planet, int **zodiac, char xdg_path[]);
+void city_search(struct cdata *cdata,  struct ui *ui, char *xdg_path, FIELD *cdata_field[], FORM *cdata_form, char *search);
 void zodiacal_releasing(struct cdata *cdata, struct pxx *pxx, struct ui *ui, double **planet, int **zodiac);
+void xdg_check(char xdg_path[], const char *s);
+void load_chart(struct cdata *cdata, char xdg_path[]);
+void save_chart(struct cdata *cdata, char xdg_path[]);

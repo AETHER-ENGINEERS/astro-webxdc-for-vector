@@ -20,11 +20,8 @@
 #include "swephexp.h"
 #include "astro.h"
 #include "ui.h"
-#include "io.h"
-#include "indat.h"
 #include "chronos.h"
 #include "draw.h"
-#include "search.h"
 
 static void setfield_localtime(FIELD *cdata_field[], struct cdata *cdata)
 {

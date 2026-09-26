@@ -20,8 +20,6 @@
 #include "swephexp.h"
 #include "astro.h"
 #include "ui.h"
-#include "io.h"
-#include "indat.h"
 #include "draw.h"
 
 #define GEONAMEID 0

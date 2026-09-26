@@ -19,10 +19,8 @@
 #include "swephexp.h"
 #include "astro.h"
 #include "ui.h"
-#include "io.h"
 #include "anim.h"
 #include "chronos.h"
-#include "indat.h"
 #include "init.h"
 
 #define VERSION "0.76.2"

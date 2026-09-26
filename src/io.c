@@ -25,7 +25,21 @@
 #include "swephexp.h"
 #include "astro.h"
 #include "ui.h"
-#include "io.h"
+
+#define FCITY 0
+#define FSTATE 1
+#define FCOUNTRY 2
+#define FYEAR 3
+#define FMONTH 4
+#define FDAY 5
+#define FHOUR 6
+#define FMIN 7
+#define FSEC 8
+#define FTZ 9
+#define FLAT 10
+#define FLON 11
+#define FDST 12
+#define FMAX 13
 
 void xdg_check(char *xdg_path, const char *s)
 {
