@@ -18,7 +18,7 @@
 
 #define MAXBUF 1024
 #define MAXPATH 2048
-#define CHARTMAX 12
+#define CHARTMAX 13
 
 #define ERR_EXIT(str) do { \
 		fprintf(stderr, "%s\n", str); \

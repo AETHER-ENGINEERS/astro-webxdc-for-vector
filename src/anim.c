@@ -41,10 +41,10 @@ static void enanosleep(unsigned int ms)
 void cc_data(WINDOW *win, struct cdata *cdata, struct ui *ui)
 {	
 	int starty, startx;
-	int count = (ui->cc == TRANSIT) ? 2 : 1;
+	int count = (ui->cc == TRANSIT || ui->cc == SYNASTRY) ? 2 : 1;
 	for (int i = 0; i < count; ++i)
 	{
-		if (ui->cc == TRANSIT)
+		if (ui->cc == TRANSIT || ui->cc == SYNASTRY)
 		{
 			i++;
 			starty = 2;
@@ -64,7 +64,7 @@ void cc_data(WINDOW *win, struct cdata *cdata, struct ui *ui)
 		if(cdata->chart_name)
 			mvwprintw(win, starty, startx, "%s", cdata->chart_name);
 		
-		if (ui->cc != TRANSIT)
+		if (ui->cc != TRANSIT || ui->cc != SYNASTRY)
 		{
 			starty += 1;
 			if (cdata->state && !isdigit((unsigned char)cdata->state[0]) && strlen(cdata->state) > 1)
@@ -193,10 +193,10 @@ void synastry(struct cdata **cdata, struct pxx **pxx, struct ui *ui, double **pl
 	cdata[key]->sign_cusp[1] = cdata[ui->cc]->sign_cusp[1];
 	
 	wheel_init(ui->main_win, ui, 0, 9, 0);
-	planet_pos(ui->main_win, cdata[key], ui, planet, zodiac);
 	
 	ui->bcc = ui->cc;
-	ui->cc = TRANSIT;
+	ui->cc = SYNASTRY;
+	planet_pos(ui->main_win, cdata[key], ui, planet, zodiac);
 	cc_data(ui->main_win, cdata[key], ui);
 	ui->cc = ui->bcc;
 	

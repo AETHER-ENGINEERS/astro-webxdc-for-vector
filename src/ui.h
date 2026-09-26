@@ -107,6 +107,7 @@ struct zxx {
 #define ZO_SYM_MAX 13
 #define MOON_MAX 8
 #define TRANSIT 11
+#define SYNASTRY 12
 #define MONTH_MAX 13
 #define WEEK_MAX 7
 
