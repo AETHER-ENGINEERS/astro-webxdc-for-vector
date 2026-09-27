@@ -25,6 +25,10 @@
 #define PREV_E 1
 #define JUL_SEC 0.00001157407407
 
+// dst trigger
+#define NDST 0
+#define YDST 1
+
 int sect(struct pxx *pxx);
 int daycount(int month, int year);
 void eclipse(double jd_ut, double *luna_eclipse, double *sol_eclipse);

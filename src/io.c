@@ -24,6 +24,7 @@
 #include <menu.h>
 #include "swephexp.h"
 #include "astro.h"
+#include "chronos.h"
 #include "ui.h"
 
 #define FCITY 0

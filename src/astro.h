@@ -28,10 +28,6 @@
 		exit(EXIT_FAILURE); \
 		} while (0)
 		
-// dst trigger
-#define NDST 0
-#define YDST 1
-
 // planet data
 #define LONG 0
 #define LAT 1
@@ -53,8 +49,6 @@
 #define PL_X 17
 #define PL_Y 18
 #define MAXPXX 19
-
-struct ui;
 
 #define SPXXMAX 18 // struct member count
 struct pxx {
@@ -119,6 +113,8 @@ struct cdata {
 	double le[EMAX]; // lunar eclipse
 	double se[EMAX]; // solar eclipse
 };
+
+struct ui;
 
 #define CITY 0
 #define YEAR 1
