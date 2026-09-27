@@ -19,6 +19,5 @@
 void cc_data(WINDOW *win, struct cdata *cdata, struct ui *ui);
 void animate_chart(struct cdata *cdata, struct pxx *pxx, struct ui *ui, double **planet, int **zodiac);
 void realtime_chart(struct cdata *cdata, struct pxx *pxx, struct ui *ui, double **planet, int **zodiac);
-void solar_return(struct cdata *cdata, struct pxx *pxx, struct ui *ui, double **planet, int **zodiac);
 void transit(struct cdata **cdata, struct pxx **pxx, struct ui *ui, double **planet, int **zodiac);
 void synastry(struct cdata **cdata, struct pxx **pxx, struct ui *ui, double **planet, int **zodiac, int key);
