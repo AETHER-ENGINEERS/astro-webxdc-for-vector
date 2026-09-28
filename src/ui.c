@@ -348,11 +348,10 @@ void left_table(struct cdata *cdata, struct pxx *pxx, struct ui *ui, double **pl
 	++starty;
 	if (strlen(cdata->chart_name) > 0)
 	{
-		int sign = ((int)planet[12][LONG] / 30) + 1;
-		
 		struct cdata tmp = {0};
 		set_localtime(&tmp);
 		
+		int sign = ((int)planet[12][LONG] / 30) + 1;
 		int diff = tmp.year - cdata->year;
 		int profection = (((sign + diff) - 1) % 12 + 12) % 12 + 1;
 		
@@ -361,8 +360,7 @@ void left_table(struct cdata *cdata, struct pxx *pxx, struct ui *ui, double **pl
 		
 		mvwprintw(ui->left_win, starty, startx, "profection:     mon:");
 		zo_color(ui->left_win, ui, starty, startx + 12, profection, zodiac);
-		
-		zo_color(ui->left_win, ui, starty, startx + 20, mprof, zodiac);
+		zo_color(ui->left_win, ui, starty, startx + 21, mprof, zodiac);
 	}
 }
 
