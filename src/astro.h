@@ -107,6 +107,7 @@ struct cdata {
 	int utc_mon;
 	int utc_mday;
 	int moonphase;
+	int rt; // realtime flag
 	double cusp[13];
 	double sign_cusp[13];
 	double t_cusp; // transit cusp
@@ -140,3 +141,4 @@ void zodiacal_releasing(struct cdata *cdata, struct pxx *pxx, struct ui *ui, dou
 void xdg_check(char xdg_path[], const char *s);
 void load_chart(struct cdata *cdata, char xdg_path[]);
 void save_chart(struct cdata *cdata, char xdg_path[]);
+void set_chart(struct cdata **cdata, struct pxx **pxx, struct ui *ui, double **planet, int **zodiac, int ch);

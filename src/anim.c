@@ -122,16 +122,16 @@ void cc_data(WINDOW *win, struct cdata *cdata, struct ui *ui)
 	}
 }
 
-void realtime_chart(struct cdata *cdata, struct pxx *pxx, struct ui *ui, double **planet, int **zodiac)
+void realtime_chart(struct cdata **cdata, struct pxx **pxx, struct ui *ui, double **planet, int **zodiac)
 {
 	nodelay(ui->main_win, TRUE);
 		
 	int ch = 0;
 	while ((ch = wgetch(ui->main_win)) != 9)
 	{
-		set_localtime(cdata);
+		set_localtime(cdata[ui->cc]);
 		wheel_init(ui->main_win, ui, 0, 0, 0);
-		new_chart(cdata, pxx, ui, planet, zodiac);
+		new_chart(cdata[ui->cc], pxx[ui->cc], ui, planet, zodiac);
 		
 		wattron(ui->main_win, COLOR_PAIR(FIRE));
 		mvwprintw(ui->main_win, 0, COLS - 14, "*live");
@@ -149,7 +149,17 @@ void realtime_chart(struct cdata *cdata, struct pxx *pxx, struct ui *ui, double 
 		doupdate();
 		
 		if (ch == 9 || ch == 'q')
+		{
+			cdata[ui->cc]->rt = 0;
 			break;
+		}
+		if (isdigit(ch))
+		{
+			ui->bcc = ui->cc;
+			set_chart(cdata, pxx, ui, planet, zodiac, ch);
+			cdata[ui->bcc]->rt = 1;
+			break;
+		}
 	}
 	wmove(ui->main_win, 0, COLS - 14);
 	wclrtoeol(ui->main_win);

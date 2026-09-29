@@ -55,6 +55,21 @@ static void iana_check(void)
 		ERR_EXIT("ERR: no IANA timezone data installed");
 }
 
+void set_chart(struct cdata **cdata, struct pxx **pxx, struct ui *ui, double **planet, int **zodiac, int ch)
+{
+	ui->cc = ch - '0';
+	if (ui->cc >= CHARTMAX || ui->cc <= 0)
+		ui->cc = 10;
+		
+	set_localtime(cdata[TRANSIT]);
+	ecst_init(planet, cdata[ui->cc]->se);
+	planet_init(planet, ui->cc, pxx);
+	new_chart(cdata[ui->cc], pxx[ui->cc], ui, planet, zodiac);
+	doupdate();
+	if (cdata[ui->cc]->rt)
+		realtime_chart(cdata, pxx, ui, planet, zodiac);
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
@@ -135,17 +150,8 @@ int main(int argc, char *argv[])
 	while(!done && (ch = wgetch(ui->main_win)))
 	{
 		if (isdigit(ch))
-		{
-			ui->cc = ch - '0';
-			if (ui->cc >= CHARTMAX || ui->cc <= 0)
-				ui->cc = 10;
-				
-			set_localtime(cdata[TRANSIT]);
-			ecst_init(planet, cdata[ui->cc]->se);
-			planet_init(planet, ui->cc, pxx);
-			new_chart(cdata[ui->cc], pxx[ui->cc], ui, planet, zodiac);
-			doupdate();
-		}
+			set_chart(cdata, pxx, ui, planet, zodiac, ch);
+			
 		if (ch >= ALT0 && ch <= ALT9)
 		{
 			int key = ch - ALT0;
@@ -174,7 +180,7 @@ int main(int argc, char *argv[])
 				break;
 			case 9: // tab
 				ecst_init(planet, cdata[ui->cc]->se);
-				realtime_chart(cdata[ui->cc], pxx[ui->cc], ui, planet, zodiac);
+				realtime_chart(cdata, pxx, ui, planet, zodiac);
 				doupdate();
 				break;
 			case 'z':
