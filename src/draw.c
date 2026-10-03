@@ -156,7 +156,8 @@ void planet_pos(WINDOW *win, struct cdata *cdata, struct ui *ui, double **planet
 		double sin_rad = sin(zo_pos_radian);
 		
 		int sym_len = (int)strlen(ui->sym.pl_sym[i]);
-		int x = (ui->cx - (int)(ui->pr * cos_rad)) - sym_len / 2;
+		int pl_x = (ui->cx - (int)(ui->pr * cos_rad)) - sym_len / 2;
+		int x = (ui->cx - (int)(ui->pr * cos_rad));
 		int y = ui->cy + (int)(ui->pr * sin_rad * 0.5);
 		
 		int x_in = (ui->cx - (int)((ui->ir-1) * cos_rad));
@@ -168,8 +169,8 @@ void planet_pos(WINDOW *win, struct cdata *cdata, struct ui *ui, double **planet
 		planet[i][PL_X] = x_in;
 		planet[i][PL_Y] = y_in;
 		
-		degree_color(win, y-1, x, i, planet, zodiac);
-		mvwaddstr(win, y, x, ui->sym.pl_sym[i]);
+		degree_color(win, y-1, x-2, i, planet, zodiac);
+		mvwaddstr(win, y, pl_x, ui->sym.pl_sym[i]);
 		
 		if (i <= SE_PLUTO && ui->cc != TRANSIT && ui->cc != SYNASTRY && !ui->aspect_trig)
 			mvwaddch(win, y_in_m, x_in_m, '+');
@@ -177,20 +178,20 @@ void planet_pos(WINDOW *win, struct cdata *cdata, struct ui *ui, double **planet
 		if (planet[i][RETRO] > 0 && i != SE_TRUE_NODE)
 		{
 			wattron(win, COLOR_PAIR(FIRE));
-			mvwprintw(win, y, x-1, "r");
+			mvwprintw(win, y, pl_x-1, "r");
 			wattroff(win, COLOR_PAIR(FIRE));
 		}
 			
 		if ((int)planet[i][STATION] == STATION_R)
 		{
 			wattron(win, COLOR_PAIR(EARTH));
-			mvwaddstr(win, y, x-2, "sr");
+			mvwaddstr(win, y, pl_x-2, "sr");
 			wattroff(win, COLOR_PAIR(EARTH));
 		}
 		else if ((int)planet[i][STATION] == STATION_D)
 		{
 			wattron(win, COLOR_PAIR(EARTH));
-			mvwaddstr(win, y, x-2, "sd");
+			mvwaddstr(win, y, pl_x-2, "sd");
 			wattroff(win, COLOR_PAIR(EARTH));
 		}
 	}
