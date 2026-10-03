@@ -23,6 +23,12 @@
 #include "init.h"
 #include "chronos.h"
 
+#ifdef __GLIBC__
+#define TM_GMTOFF(x) ((x).__tm_gmtoff)
+#else
+#define TM_GMTOFF(x) ((x).tm_gmtoff)
+#endif
+
 void set_localtime(struct cdata *cdata)
 {	
 	time_t now = time(NULL);
@@ -109,6 +115,93 @@ void lots(struct pxx *pxx)
 		pxx->dspir[LONG] -= 360.0;
 }
 
+struct lmt {
+    const char *timezone;
+    int year;
+    int mon;
+    int mday;
+    int hour;
+    int min;
+    int sec;
+};
+
+static const struct lmt dates[] = {
+    { "Europe/Berlin",					1893,  4,  1,  0,  0,  0 },
+    { "Europe/Zurich",          		1894,  6,  1,  0,  0,  0 },
+    { "Europe/Prague",          		1891, 10,  1,  0,  0,  0 },
+    { "Europe/Vienna",          		1893,  4,  1,  0,  0,  0 },
+    { "Europe/Paris",            		1911,  3, 11,  0,  0,  0 },
+    { "Europe/Amsterdam",        		1909,  7,  1,  0,  0,  0 },
+    { "Europe/Brussels",         		1892,  5,  1,  0,  0,  0 },
+    { "Europe/Rome",             		1893, 11,  1,  0,  0,  0 },
+    { "Europe/Madrid",           		1901, 12, 31, 23, 45, 16 },
+    { "Europe/London",           		1847, 12,  1,  0,  0,  0 },
+    { "Europe/Dublin",           		1880,  8,  2,  0,  0,  0 },
+    { "Europe/Oslo",             		1895,  1,  1,  0,  0,  0 },
+    { "Europe/Stockholm",        		1879,  1,  1,  0,  0,  0 },
+    { "Europe/Copenhagen",       		1894,  1,  1,  0,  0,  0 },
+    { "Europe/Athens",           		1916,  7,  1,  0,  0,  0 },
+    { "Europe/Helsinki",         		1921,  5,  1,  0,  0,  0 },
+    { "Europe/Moscow",           		1919,  7,  1,  0,  0,  0 },
+    { "Europe/Istanbul",         		1910,  1,  1,  0,  0,  0 },
+
+    { "America/New_York",        		1883, 11, 18, 12,  3, 58 },
+    { "America/Chicago",         		1883, 11, 18, 12,  9, 24 },
+    { "America/Denver",          		1883, 11, 18, 12,  0,  0 },
+    { "America/Los_Angeles",     		1883, 11, 18, 12,  7,  2 },
+    { "America/Toronto",         		1895,  1,  1,  0,  0,  0 },
+    { "America/Montreal",        		1884,  1,  1,  0,  0,  0 },
+    { "America/Argentina/Buenos_Aires",	1894, 10, 31, 23,  0,  0 },
+    { "America/Sao_Paulo",       		1914,  1,  1,  0,  0,  0 },
+    { "America/Bogota",          		1914, 11,  1,  0,  0,  0 },
+    { "America/Lima",             		1908,  1,  1,  0,  0,  0 },
+    { "America/Santiago",         		1890,  1,  1,  0,  0,  0 },
+
+    { "Asia/Tokyo",              		1888,  1,  1,  0,  0,  0 },
+    { "Asia/Shanghai",            		1901,  1,  1,  0,  0,  0 },
+    { "Asia/Kolkata",             		1906,  1,  1,  0,  0,  0 },
+    { "Asia/Kathmandu",           		1920,  1,  1,  0,  0,  0 },
+    { "Asia/Singapore",           		1905,  6,  1,  0,  0,  0 },
+    { "Asia/Jerusalem",           		1880,  1,  1,  0,  0,  0 },
+
+    { "Pacific/Honolulu",         		1896,  1, 13, 12,  0,  0 },
+    { "Australia/Sydney",         		1895,  2,  1,  0,  0,  0 },
+    { "Australia/Adelaide",       		1895,  2,  1,  0,  0,  0 },
+    { "Australia/Perth",          		1895,  2,  1,  0,  0,  0 }
+};
+
+static int lmt_check(const struct cdata *cdata, const struct lmt *rule)
+{
+    if (cdata->year != rule->year)
+        return cdata->year < rule->year;
+
+    if (cdata->mon != rule->mon)
+        return cdata->mon < rule->mon;
+
+    if (cdata->mday != rule->mday)
+        return cdata->mday < rule->mday;
+
+    if (cdata->hour != rule->hour)
+        return cdata->hour < rule->hour;
+
+    if (cdata->min != rule->min)
+        return cdata->min < rule->min;
+
+    return cdata->sec < rule->sec;
+}
+
+static int is_lmt_date(const struct cdata *cdata)
+{
+    for (size_t i = 0; i < sizeof(dates) / sizeof(dates[0]); ++i)
+    {
+        const struct lmt *rule = &dates[i];
+
+        if (strcmp(cdata->timezone, rule->timezone) == 0)
+			return lmt_check(cdata, rule);
+    }
+    return 0;
+}
+
 void calculate_utc(struct cdata *cdata)
 {
 	struct tm tm_in = {0};
@@ -121,6 +214,12 @@ void calculate_utc(struct cdata *cdata)
 	tm_in.tm_isdst = cdata->isdst;
 	
 	time_t t = mktime(&tm_in);
+	
+	if (is_lmt_date(cdata))
+	{
+		int offset = (int)lround(cdata->dlon * 240.0);
+		t += (int)TM_GMTOFF(tm_in) - offset;
+	}
 	
 	struct tm *tm_utc = gmtime(&t);
 	
