@@ -95,16 +95,21 @@ void cc_data(WINDOW *win, struct cdata *cdata, struct ui *ui)
 		}
 		starty += 1;
 		
-		int utc = cdata->hour - (int)cdata->utc_hour;
-		if (utc < - 12)
-			utc += 24;
-		else if (utc > 14)
-			utc -= 24;
+		int local_min = cdata->hour * 60 + cdata->min + (int)lround(cdata->sec / 60.0);
+		int utc_min = (int)lround(cdata->utc_hour * 60.0);
+		int off_min = local_min - utc_min;
+		if (off_min < -12 * 60)
+			off_min += 24 + 60;
+		else if (off_min > 14 * 60)
+			off_min -= 24 * 60;
+		int usign = off_min < 0 ? -1 : 1;
+		int abs_min = abs(off_min);
+		int off_hour = abs_min / 60;
+		int rem_min = abs_min % 60;
+		
+		mvwprintw(win, starty, startx, "%sUTC%c%02d:%02d", cdata->isdst == YDST ? "DST " : "",
+		usign < 0 ? '-' : '+', off_hour, rem_min);
 			
-		if (cdata->isdst == YDST)
-			mvwprintw(win, starty, startx, "DST UTC%+02d", utc);
-		else
-			mvwprintw(win, starty, startx, "UTC%+02d", utc);
 		if (i > 0)
 			return;
 			
