@@ -375,7 +375,7 @@ void right_table(struct cdata *cdata, struct ui *ui, double *planet[], int *zodi
 	"ne", "pl", "so", "no",
 	"  "};
 	
-	int p_count = 11;
+	int p_count = 10;
 	int y = 12, x = 27;
 	int cx1 = 10, cx2 = 14, cx3 = 18, cx4 = 22;
 	
@@ -384,25 +384,25 @@ void right_table(struct cdata *cdata, struct ui *ui, double *planet[], int *zodi
 	
 	werase(ui->right_win);
 	
-	char *header = " speed pl  next    prev";
-	mvwprintw(ui->right_win, 0, 0, "%s", header);
-	mvwprintw(ui->right_win, 1, 0, " -----:--:-------:------xx");
-	
-	mvwprintw(ui->right_win, 2, 1, "eclip:%s:", name[1]);
-	zo_color(ui->right_win, ui, 2, cx1, (int)cdata->le[EN_SIGN], zodiac);
-	mvwprintw(ui->right_win, 2, cx2, "%-3.f:", cdata->le[EN_JUL]);
+
+	mvwprintw(ui->right_win, 0, 1, "eclip:%s:", name[1]);
+	zo_color(ui->right_win, ui, 0, cx1, (int)cdata->le[EN_SIGN], zodiac);
+	mvwprintw(ui->right_win, 0, cx2, "%-3.f:", cdata->le[EN_JUL]);
  
-	zo_color(ui->right_win, ui, 2, cx3, (int)cdata->le[EP_SIGN], zodiac);
-	mvwprintw(ui->right_win, 2, cx4, "-%2.f", cdata->le[EP_JUL]);
+	zo_color(ui->right_win, ui, 0, cx3, (int)cdata->le[EP_SIGN], zodiac);
+	mvwprintw(ui->right_win, 0, cx4, "-%2.f", cdata->le[EP_JUL]);
 	
-	mvwprintw(ui->right_win, 3, 1, "-----:%s:", name[0]);
-	zo_color(ui->right_win, ui, 3, cx1, (int)cdata->se[EN_SIGN], zodiac);
-	mvwprintw(ui->right_win, 3, cx2, "%-3.f:", cdata->se[EN_JUL]);
+	mvwprintw(ui->right_win, 1, 1, "-----:%s:", name[0]);
+	zo_color(ui->right_win, ui, 1, cx1, (int)cdata->se[EN_SIGN], zodiac);
+	mvwprintw(ui->right_win, 1, cx2, "%-3.f:", cdata->se[EN_JUL]);
  
-	zo_color(ui->right_win, ui, 3, cx3, (int)cdata->se[EP_SIGN], zodiac);
-	mvwprintw(ui->right_win, 3, cx4, "-%2.f", cdata->se[EP_JUL]);
+	zo_color(ui->right_win, ui, 1, cx3, (int)cdata->se[EP_SIGN], zodiac);
+	mvwprintw(ui->right_win, 1, cx4, "-%2.f", cdata->se[EP_JUL]);
+	
+	char *header = " speed:--:-next--:-prev--";
+	mvwprintw(ui->right_win, 2, 0, "%s", header);
    
-    int i = 3, j = SE_MERCURY;
+    int i = 2, j = SE_MERCURY;
 	for (; i < p_count; ++i, ++j)
 	{
 		int nsign = (int)(planet[j][NEXT_Z] / 30) + 1;
@@ -418,4 +418,5 @@ void right_table(struct cdata *cdata, struct ui *ui, double *planet[], int *zodi
 		zo_color(ui->right_win, ui, i+1, cx3, psign, zodiac);
 		mvwprintw(ui->right_win, i+1, cx4, "%-4.0f", planet[j][PREV_S]);
 	}
+	mvwprintw(ui->right_win, i+1, 0, " ------------------------");
 }
