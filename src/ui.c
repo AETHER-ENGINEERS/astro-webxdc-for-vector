@@ -368,51 +368,54 @@ void right_table(struct cdata *cdata, struct ui *ui, double *planet[], int *zodi
 {
 	if (ui->cc >= TRANSIT)
 		return;
-	size_t p_count = 10;
 	
-	mvwin(ui->right_win, LINES - 11, COLS - 24);
-	wresize(ui->right_win, 11, 24);
+	const char *name[13] = { 
+	"su", "mo", "me", "ve",
+	"ma", "ju", "sa", "ur",
+	"ne", "pl", "so", "no",
+	"  "};
+	
+	int p_count = 11;
+	int y = 12, x = 27;
+	int cx1 = 10, cx2 = 14, cx3 = 18, cx4 = 22;
+	
+	mvwin(ui->right_win, LINES - y, COLS - x);
+	wresize(ui->right_win, y, x);
 	
 	werase(ui->right_win);
 	
-	mvwprintw(ui->right_win, 0, 0, "(()");
-	zo_color(ui->right_win, ui, 0, 4, (int)cdata->le[EN_SIGN], zodiac);
-	mvwprintw(ui->right_win, 0, 8, "%2.f", cdata->le[EN_JUL]);
- 
-	zo_color(ui->right_win, ui, 0, 13, (int)cdata->le[EP_SIGN], zodiac);
-	mvwprintw(ui->right_win, 0, 17, "-%2.f", cdata->le[EP_JUL]);
+	char *header = " speed pl  next    prev";
+	mvwprintw(ui->right_win, 0, 0, "%s", header);
+	mvwprintw(ui->right_win, 1, 0, " -----:--:-------:------xx");
 	
-	mvwprintw(ui->right_win, 1, 0, "(o)");
-	zo_color(ui->right_win, ui, 1, 4, (int)cdata->se[EN_SIGN], zodiac);
-	mvwprintw(ui->right_win, 1, 8, "%2.f", cdata->se[EN_JUL]);
+	mvwprintw(ui->right_win, 2, 1, "eclip:%s:", name[1]);
+	zo_color(ui->right_win, ui, 2, cx1, (int)cdata->le[EN_SIGN], zodiac);
+	mvwprintw(ui->right_win, 2, cx2, "%-3.f:", cdata->le[EN_JUL]);
  
-	zo_color(ui->right_win, ui, 1, 13, (int)cdata->se[EP_SIGN], zodiac);
-	mvwprintw(ui->right_win, 1, 17, "-%2.f", cdata->se[EP_JUL]);
+	zo_color(ui->right_win, ui, 2, cx3, (int)cdata->le[EP_SIGN], zodiac);
+	mvwprintw(ui->right_win, 2, cx4, "-%2.f", cdata->le[EP_JUL]);
+	
+	mvwprintw(ui->right_win, 3, 1, "-----:%s:", name[0]);
+	zo_color(ui->right_win, ui, 3, cx1, (int)cdata->se[EN_SIGN], zodiac);
+	mvwprintw(ui->right_win, 3, cx2, "%-3.f:", cdata->se[EN_JUL]);
+ 
+	zo_color(ui->right_win, ui, 3, cx3, (int)cdata->se[EP_SIGN], zodiac);
+	mvwprintw(ui->right_win, 3, cx4, "-%2.f", cdata->se[EP_JUL]);
    
-    size_t i = 2, j = SE_MERCURY;
+    int i = 3, j = SE_MERCURY;
 	for (; i < p_count; ++i, ++j)
 	{
-		char header[MAXBUF];
-		snprintf(header, sizeof(header), "%-6s%6s  %4s %4s", 
-		"planet", "speed", "next", "prev");
-		mvwprintw(ui->right_win, 2, 0, "%s", header);
-	
-		char buff[MAXBUF];
+		int nsign = (int)(planet[j][NEXT_Z] / 30) + 1;
+		int psign = (int)(planet[j][PREV_Z] / 30) + 1;
+		char dsign = (planet[j][LONG_S] > 0.0) ? ' ' : '-';
 		
-		if (planet[j][LONG_S] > 0.0)
-		{
-			snprintf(buff, sizeof(buff), "%-6s%2.0f*%-2.02d'  %-4.0f %-4.0f",
-			ui->sym.pl_sym[j], planet[j][DEGREE_S], (int)planet[j][MIN_S],
-			planet[j][NEXT_S], planet[j][PREV_S]);
-		}
+		mvwprintw(ui->right_win, i+1, 0, "%c%1.0f*%-2.02d':%-2s:",
+		dsign, planet[j][DEGREE_S], (int)planet[j][MIN_S], name[j]);
 		
-		else
-		{
-			snprintf(buff, sizeof(buff), "%-6s-%1.0f*%-2.02d'  %-4.0f %-4.0f",
-			ui->sym.pl_sym[j], planet[j][DEGREE_S], (int)planet[j][MIN_S],
-			planet[j][NEXT_S], planet[j][PREV_S]);
-		}
-		
-		mvwprintw(ui->right_win, (int)i + 1, 0, "%s", buff);
+		zo_color(ui->right_win, ui, i+1, cx1, nsign, zodiac);
+		mvwprintw(ui->right_win, i+1, cx2, "%-3.0f:", planet[j][NEXT_S]);
+			
+		zo_color(ui->right_win, ui, i+1, cx3, psign, zodiac);
+		mvwprintw(ui->right_win, i+1, cx4, "%-4.0f", planet[j][PREV_S]);
 	}
 }

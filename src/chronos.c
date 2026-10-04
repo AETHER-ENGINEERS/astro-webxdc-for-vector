@@ -724,8 +724,8 @@ void retro_calc(double jd_ut, int ipl, double *planet[])
 	double xx[6];
 	char serr[AS_MAXCH];
 	
-	const double parsemax = 4;
-	const double parsemin = 0.5;
+	const double parsemax = 2;
+	const double parsemin = 0.1;
 	
 	double jd_copy = jd_ut;
 	
@@ -744,6 +744,7 @@ void retro_calc(double jd_ut, int ipl, double *planet[])
 			speed = xx[LONG_S];
 			planet[ipl][NEXT_S] = jd_copy - jd_ut;
 			planet[ipl][NEXT_JUL] = jd_copy;
+			planet[ipl][NEXT_Z] = xx[LONG];
 			ns_found = 1;
 		}
 	}
@@ -760,6 +761,7 @@ void retro_calc(double jd_ut, int ipl, double *planet[])
 			speed = xx[LONG_S];
 			planet[ipl][NEXT_S] = jd_copy - jd_ut;
 			planet[ipl][NEXT_JUL] = jd_copy;
+			planet[ipl][NEXT_Z] = xx[LONG];
 			ns_found = 1;
 		}
 	}
@@ -779,6 +781,7 @@ void retro_calc(double jd_ut, int ipl, double *planet[])
 			speed = xx[LONG_S];
 			planet[ipl][PREV_S] = jd_copy - jd_ut;
 			planet[ipl][PREV_JUL] = jd_copy;
+			planet[ipl][PREV_Z] = xx[LONG];
 			ps_found = 1;
 		}
 	}
@@ -795,6 +798,7 @@ void retro_calc(double jd_ut, int ipl, double *planet[])
 			speed = xx[LONG_S];
 			planet[ipl][PREV_S] = jd_copy - jd_ut;
 			planet[ipl][PREV_JUL] = jd_copy;
+			planet[ipl][PREV_Z] = xx[LONG];
 			ps_found = 1;
 		}
 	}
