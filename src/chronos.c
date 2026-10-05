@@ -754,7 +754,6 @@ static void find_station(double jd_start, double initial_speed, int direction, i
 		jd_ut -= direction * fine;
 		swe_calc_ut(jd_ut, ipl, iflag, xx, serr);
 		speed = xx[LONG_S];
-		
 	} 
 	while (speed_sign(speed) != initial_sign);
 	
@@ -823,11 +822,9 @@ void eclipse(double jd_ut, double *luna_eclipse, double *sol_eclipse)
 	const int iter = 32;
 	const int multi = 8;
 	
-	double limit[32] = {0};
-	
 	for (int i = 0; i < iter; ++i)
 	{
-		limit[i] = (multi * i);
+		const double limit = (multi * i);
 		
 		if (sol_eclipse[E_INIT] > 0)
 		{
@@ -846,8 +843,8 @@ void eclipse(double jd_ut, double *luna_eclipse, double *sol_eclipse)
 		sol_eclipse[EP_JUL] < eclipse_calc || luna_eclipse[EP_JUL] < eclipse_calc)
 			sol_eclipse[E_INIT] = 0;
 			
-		if (fabs(limit[i] - sol_eclipse[EN_JUL]) <= eclipse_calc || fabs(limit[i] - sol_eclipse[EP_JUL]) <= eclipse_calc ||
-		fabs(limit[i] - luna_eclipse[EN_JUL]) <= eclipse_calc || fabs(limit[i] - luna_eclipse[EP_JUL]) <= eclipse_calc ||
+		if (fabs(limit - sol_eclipse[EN_JUL]) <= eclipse_calc || fabs(limit - sol_eclipse[EP_JUL]) <= eclipse_calc ||
+		fabs(limit - luna_eclipse[EN_JUL]) <= eclipse_calc || fabs(limit - luna_eclipse[EP_JUL]) <= eclipse_calc ||
 		(int)sol_eclipse[E_INIT] == 0)
 		{
 			swe_sol_eclipse_when_glob(jd_ut, iflag, 0, tret, NEXT_E, serr);
