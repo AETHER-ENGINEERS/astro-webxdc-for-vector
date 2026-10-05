@@ -718,146 +718,95 @@ void cpt(struct cdata *cdata, struct tm *temp, time_t *t, int x)
 	}
 }
 
-void retro_calc(double jd_ut, int ipl, double *planet[])
+static int speed_sign(double speed)
 {
+	if (speed > 0.0)
+		return 1;
+	if (speed < 0.0)
+		return -1;
+	return 0;
+}
+
+static void find_station(double jd_start, double initial_speed, int direction, int ipl, double *offset, double *jd, double *longitude)
+{
+	const double coarse = 2.0;
+	const double fine = 0.1;
+	
+	double jd_ut = jd_start;
 	int iflag = SEFLG_SWIEPH | SEFLG_SPEED;
 	double xx[6];
 	char serr[AS_MAXCH];
+	double speed = initial_speed;
 	
-	const double parsemax = 2;
-	const double parsemin = 0.1;
-	
-	double jd_copy = jd_ut;
-	
-	double speed = planet[ipl][LONG_S];
-	
-	int ns_found = 0;
-	while(speed > 0.0 && !ns_found)
+	int initial_sign = speed_sign(initial_speed);
+	if (initial_sign == 0)
+		return;
+	do 
 	{
-		jd_copy += parsemax;
-		swe_calc_ut(jd_copy, ipl, iflag, xx, serr);
+		jd_ut += direction * coarse;
+		swe_calc_ut(jd_ut, ipl, iflag, xx, serr);
 		speed = xx[LONG_S];
-		while (speed < 0.0)
-		{
-			jd_copy -= parsemin;
-			swe_calc_ut(jd_copy, ipl, iflag, xx, serr);
-			speed = xx[LONG_S];
-			planet[ipl][NEXT_S] = jd_copy - jd_ut;
-			planet[ipl][NEXT_JUL] = jd_copy;
-			planet[ipl][NEXT_Z] = xx[LONG];
-			ns_found = 1;
-		}
-	}
-	
-	while(speed < 0.0 && !ns_found)
+	} 
+	while (speed_sign(speed) == initial_sign);
+		
+	do
 	{
-		jd_copy += parsemax;
-		swe_calc_ut(jd_copy, ipl, iflag, xx, serr);
+		jd_ut -= direction * fine;
+		swe_calc_ut(jd_ut, ipl, iflag, xx, serr);
 		speed = xx[LONG_S];
-		while (speed > 0.0)
-		{
-			jd_copy -= parsemin;
-			swe_calc_ut(jd_copy, ipl, iflag, xx, serr);
-			speed = xx[LONG_S];
-			planet[ipl][NEXT_S] = jd_copy - jd_ut;
-			planet[ipl][NEXT_JUL] = jd_copy;
-			planet[ipl][NEXT_Z] = xx[LONG];
-			ns_found = 1;
-		}
-	}
+		
+	} 
+	while (speed_sign(speed) != initial_sign);
 	
-	speed = planet[ipl][LONG_S];
-	jd_copy = jd_ut;
-	int ps_found = 0;
-	while(speed > 0.0 && !ps_found)
-	{
-		jd_copy -= parsemax;
-		swe_calc_ut(jd_copy, ipl, iflag, xx, serr);
-		speed = xx[LONG_S];
-		while (speed < 0.0)
-		{
-			jd_copy += parsemin;
-			swe_calc_ut(jd_copy, ipl, iflag, xx, serr);
-			speed = xx[LONG_S];
-			planet[ipl][PREV_S] = jd_copy - jd_ut;
-			planet[ipl][PREV_JUL] = jd_copy;
-			planet[ipl][PREV_Z] = xx[LONG];
-			ps_found = 1;
-		}
-	}
-	
-	while(speed < 0.0 && !ps_found)
-	{
-		jd_copy -= parsemax;
-		swe_calc_ut(jd_copy, ipl, iflag, xx, serr);
-		speed = xx[LONG_S];
-		while (speed > 0.0)
-		{
-			jd_copy += parsemin;
-			swe_calc_ut(jd_copy, ipl, iflag, xx, serr);
-			speed = xx[LONG_S];
-			planet[ipl][PREV_S] = jd_copy - jd_ut;
-			planet[ipl][PREV_JUL] = jd_copy;
-			planet[ipl][PREV_Z] = xx[LONG];
-			ps_found = 1;
-		}
-	}
+	*offset = jd_ut - jd_start;
+	*jd = jd_ut;
+	*longitude = xx[LONG];
 }
 
 void retro_station(double jd_ut, double *planet[])
 {
 	const int station = 7;
-	const double is_retro = 0.0;
 	const double station_calc = JUL_SEC;
 	
 	const int iter = 32;
 	const int multi = 16;
 	
-	double limit[32] = {0};
-	
 	for (int ipl = SE_MERCURY; ipl <= SE_PLUTO; ipl++)
 	{
 		for (int i = 0; i < iter; ++i)
 		{
-			limit[i] = (multi * i);
+			const double limit = (multi * i);
 			
 			if (planet[ipl][NEXT_JUL] - jd_ut > station_calc ||
 			planet[ipl][PREV_JUL] - jd_ut < -station_calc)
 			{
-				double nr = planet[ipl][NEXT_JUL] - jd_ut;
-				planet[ipl][NEXT_S] = nr;
-				double pr = planet[ipl][PREV_JUL] - jd_ut;
-				planet[ipl][PREV_S] = pr;
+				planet[ipl][NEXT_S] = planet[ipl][NEXT_JUL] - jd_ut;
+				planet[ipl][PREV_S] = planet[ipl][PREV_JUL] - jd_ut;
 			}
-			if (fabs(planet[ipl][NEXT_S] - limit[i]) <= station_calc || 
-			fabs(planet[ipl][PREV_S] - limit[i]) <= station_calc)
-			{
-				planet[ipl][RET_INIT] = 0;
-				break;
-			}
-			if (planet[ipl][NEXT_S] <= 0 || planet[ipl][PREV_S] >= 0)
+			
+			if (fabs(planet[ipl][NEXT_S] - limit) <= station_calc || 
+			fabs(planet[ipl][PREV_S] - limit) <= station_calc ||
+			planet[ipl][NEXT_S] <= 0.0 || planet[ipl][PREV_S] >= 0.0)
 			{
 				planet[ipl][RET_INIT] = 0;
 				break;
 			}
 		}
 		
-		if ((int)planet[ipl][RET_INIT] == 0)
+		if (planet[ipl][RET_INIT] < 0.5)
 		{
-			retro_calc(jd_ut, ipl, planet);
+			find_station(jd_ut, planet[ipl][LONG_S], +1, ipl, &planet[ipl][NEXT_S], &planet[ipl][NEXT_JUL], &planet[ipl][NEXT_Z]);
+			find_station(jd_ut, planet[ipl][LONG_S], -1, ipl, &planet[ipl][PREV_S], &planet[ipl][PREV_JUL], &planet[ipl][PREV_Z]);
 			planet[ipl][RET_INIT] = 1;
 		}
 	
 		// fill retro & station data
-		if (planet[ipl][LONG_S] <= is_retro)
-			planet[ipl][RETRO] = 1.0;
-		else
-			planet[ipl][RETRO] = 0.0;
-			
-		if ((int)planet[ipl][RETRO] == 1 && planet[ipl][NEXT_S] <= station)
-			planet[ipl][STATION] = STATION_D;
-		else if ((int)planet[ipl][RETRO] == 0 && planet[ipl][NEXT_S] <= station)
-			planet[ipl][STATION] = STATION_R;
+		const int is_retro = planet[ipl][LONG_S] <= 0.0;
+		
+		planet[ipl][RETRO] = is_retro ? 1.0 : 0.0;
+		
+		if (planet[ipl][NEXT_S] <= station)
+			planet[ipl][STATION] = is_retro ? STATION_D : STATION_R;
 		else
 			planet[ipl][STATION] = 0.0;
 	}

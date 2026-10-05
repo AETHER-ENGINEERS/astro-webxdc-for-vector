@@ -384,7 +384,6 @@ void right_table(struct cdata *cdata, struct ui *ui, double *planet[], int *zodi
 	
 	werase(ui->right_win);
 	
-
 	mvwprintw(ui->right_win, 0, 1, "eclip:%s:", name[1]);
 	zo_color(ui->right_win, ui, 0, cx1, (int)cdata->le[EN_SIGN], zodiac);
 	mvwprintw(ui->right_win, 0, cx2, "%-3.f:", cdata->le[EN_JUL]);
