@@ -23,7 +23,7 @@
 #include "chronos.h"
 #include "init.h"
 
-#define VERSION "0.76.3"
+#define VERSION "0.76.4"
 
 void *ecalloc(size_t n, size_t size)
 {
