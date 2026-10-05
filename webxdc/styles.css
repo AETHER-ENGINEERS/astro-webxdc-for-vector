@@ -1,0 +1,123 @@
+:root {
+  --bg: #12100e;
+  --bg-2: #1c1916;
+  --ink: #efe6d6;
+  --muted: #9a9084;
+  --line: #3a342c;
+  --fire: #e15a3a;
+  --earth: #7d9a56;
+  --air: #e0c36a;
+  --water: #5b92c4;
+  --pad: 16px;
+  --nav: 64px;
+  color-scheme: dark;
+  font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { min-height: 100dvh; padding-bottom: calc(var(--nav) + 12px); }
+button, input, select { font: inherit; color: inherit; }
+button {
+  cursor: pointer;
+  background: var(--bg-2);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 8px 14px;
+}
+button.on, button#draw, button#fixture, button#sr-go, button#cfg-save, button#lib-save {
+  background: var(--air);
+  color: #1a1408;
+  border-color: var(--air);
+}
+button:disabled { opacity: 0.4; cursor: default; }
+input, select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  min-height: 44px;
+  padding: 8px 10px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 16px;
+}
+label { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; font-size: 0.92rem; }
+h1 { font-weight: 500; font-size: 1.7rem; letter-spacing: -0.03em; margin: 0 0 8px; }
+h2 { font-weight: 500; font-size: 1.15rem; margin: 22px 0 8px; }
+a { color: var(--air); }
+.top, main { padding: var(--pad); }
+.top { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--line); }
+.mark { margin: 0; letter-spacing: 0.22em; text-transform: lowercase; font-size: 1.05rem; }
+.sub, .lead, .muted { color: var(--muted); }
+.sub { margin: 0; font-size: 0.82rem; }
+.lead { margin-top: 0; }
+.banner { margin: 0; padding: 10px var(--pad); background: #2a2418; }
+.banner.bad { background: #3a2018; color: #ffd0c4; }
+.row, .split { display: flex; flex-wrap: wrap; gap: 8px; }
+.split > label, .split.four > label, .split.three > label { flex: 1; min-width: 90px; }
+.nav {
+  position: fixed; left: 0; right: 0; bottom: 0; height: var(--nav);
+  display: flex; background: #0e0c0a; border-top: 1px solid var(--line); z-index: 5;
+}
+.nav button { flex: 1; border: 0; border-radius: 0; background: transparent; }
+.sheet {
+  position: fixed; left: 12px; right: 12px; bottom: calc(var(--nav) + 8px);
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px;
+  display: flex; flex-direction: column; padding: 8px; z-index: 6;
+}
+.sheet button { border-radius: 10px; text-align: left; }
+.stage { display: flex; flex-direction: column; gap: 12px; }
+.wheel { width: min(100%, 640px); height: auto; display: block; margin: 0 auto; }
+.ring { fill: none; stroke: var(--line); stroke-width: 1; }
+.tick, .cusp { stroke: #4a433a; stroke-width: 1; }
+.angle { stroke: var(--ink); stroke-width: 1.4; }
+.aspect { fill: none; stroke-width: 1; opacity: 0.85; }
+.glyph, .body { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 18px; }
+.house-no { fill: var(--muted); font-size: 11px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+.fire { color: var(--fire); fill: var(--fire); stroke: var(--fire); }
+.earth { color: var(--earth); fill: var(--earth); stroke: var(--earth); }
+.air { color: var(--air); fill: var(--air); stroke: var(--air); }
+.water { color: var(--water); fill: var(--water); stroke: var(--water); }
+.body.ghost { opacity: 0.55; font-size: 15px; }
+.panels { display: flex; flex-direction: column; gap: 12px; }
+.panel {
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.45;
+}
+.panel header, .slot header { letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-size: 11px; margin: 12px 0 6px; }
+.panel header:first-child { margin-top: 0; }
+.pos, .stat, .dig { display: grid; gap: 8px; align-items: baseline; }
+.pos { grid-template-columns: 4.8rem 5.2rem minmax(0, 1fr); }
+.stat { grid-template-columns: 1fr auto auto; }
+.dig { grid-template-columns: 2rem repeat(7, 1fr); }
+.dig i { font-style: normal; color: var(--muted); }
+.dig i.good { color: var(--earth); }
+.dig i.bad { color: var(--fire); }
+.rule { height: 1px; background: var(--line); margin: 6px 0; }
+.meta-name { font-family: "Iowan Old Style", Palatino, Georgia, serif; font-size: 1.15rem; margin: 0 0 6px; }
+.mono { font-variant-numeric: tabular-nums; }
+.phase { font-family: "Iowan Old Style", Palatino, Georgia, serif; font-size: 1rem; }
+.empty { color: var(--muted); }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.slot { border: 1px solid var(--line); border-radius: 16px; padding: 12px; background: var(--bg-2); }
+.slot p { margin: 6px 0 10px; }
+.zr { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+.zr-col { min-width: 180px; flex: 1; }
+.zr-col.current { outline: 1px solid var(--air); border-radius: 12px; padding: 6px; }
+.zr-row {
+  display: block; width: 100%; text-align: left; border-radius: 8px; margin: 2px 0;
+  background: transparent; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px;
+}
+.zr-row.on { background: #2a261c; }
+.chart-tools { margin-bottom: 8px; }
+
+@media (min-width: 960px) {
+  .stage { flex-direction: row; align-items: flex-start; }
+  #wheel-host { flex: 1.1; }
+  .panels { flex: 0.9; max-height: calc(100dvh - 140px); overflow: auto; }
+}

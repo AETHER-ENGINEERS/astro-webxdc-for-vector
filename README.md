@@ -99,3 +99,5 @@ swiss ephemeris
  
 geonames - (city-db)  
 <sub>CC BY 4.0</sub>
+
+WebXDC client for Vector: [`webxdc/`](webxdc/).

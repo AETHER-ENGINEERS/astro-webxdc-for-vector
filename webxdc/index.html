@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>astro</title>
+  <link rel="icon" href="icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div>
+      <p class="mark">astro</p>
+      <p class="sub">sweetpotatopress · offline chart</p>
+    </div>
+    <p id="ready-flag" class="sub"></p>
+  </header>
+  <p id="err" class="banner bad" hidden></p>
+  <p id="note" class="banner" hidden></p>
+
+  <main>
+    <section data-screen="form">
+      <h1>Chart</h1>
+      <form id="chart-form" autocomplete="off">
+        <label>Name <input id="f-name" maxlength="80"></label>
+        <label>City <input id="f-city" maxlength="80"></label>
+        <div class="split">
+          <label>State <input id="f-state" maxlength="80"></label>
+          <label>Country <input id="f-country" maxlength="80"></label>
+        </div>
+        <label>Latitude <input id="f-lat" inputmode="decimal" placeholder="32.7157" required></label>
+        <label>Longitude <input id="f-lon" inputmode="decimal" placeholder="-117.1611 east-positive" required></label>
+        <label>IANA timezone <input id="f-zone" list="zones" placeholder="America/Los_Angeles" required></label>
+        <datalist id="zones"></datalist>
+        <div class="split three">
+          <label>Year <input id="f-year" inputmode="numeric" min="1800" max="2399"></label>
+          <label>Month <input id="f-mon" inputmode="numeric" min="1" max="12"></label>
+          <label>Day <input id="f-day" inputmode="numeric" min="1" max="31"></label>
+        </div>
+        <div class="split four">
+          <label>Hour <input id="f-hour" inputmode="numeric" min="1" max="12"></label>
+          <label>Min <input id="f-min" inputmode="numeric" min="0" max="59"></label>
+          <label>Sec <input id="f-sec" inputmode="numeric" min="0" max="59"></label>
+          <label>AM/PM
+            <select id="f-ap"><option>AM</option><option>PM</option></select>
+          </label>
+        </div>
+        <label>DST
+          <select id="f-dst">
+            <option value="-1">Auto</option>
+            <option value="1">On</option>
+            <option value="0">Off</option>
+          </select>
+        </label>
+        <div class="row">
+          <button type="button" id="draw" disabled>Draw</button>
+          <button type="button" id="fixture" disabled>Run fixture</button>
+          <button type="button" id="now">Local time</button>
+          <button type="button" id="clear">Clear</button>
+          <button type="button" id="cancel">Cancel</button>
+        </div>
+      </form>
+    </section>
+
+    <section data-screen="chart" hidden>
+      <div class="chart-tools row">
+        <button type="button" id="redraw">Redraw</button>
+        <button type="button" id="toggle-left">Hide positions</button>
+        <button type="button" id="toggle-right">Hide sky</button>
+        <button type="button" id="toggle-asp">Hide aspects</button>
+        <button type="button" id="dst">DST</button>
+        <button type="button" id="share">Share</button>
+      </div>
+      <p id="overlay-note" class="sub"></p>
+      <p id="fixture-note" class="sub"></p>
+      <div class="stage">
+        <div id="wheel-host"></div>
+        <div class="panels">
+          <div id="left-panel"></div>
+          <div id="right-panel"></div>
+        </div>
+      </div>
+    </section>
+
+    <section data-screen="time" hidden>
+      <h1>Time</h1>
+      <p class="lead">Step the open chart. Animation and the live clock are buttons, not keys.</p>
+      <div class="row">
+        <button type="button" id="step-back">Step back</button>
+        <button type="button" id="play">Animate</button>
+        <button type="button" id="step-fwd">Step forward</button>
+        <button type="button" id="live">Live clock</button>
+      </div>
+      <label>Step size
+        <select id="step-size">
+          <option value="second">second</option>
+          <option value="minute">minute</option>
+          <option value="hour" selected>hour</option>
+          <option value="day">day</option>
+          <option value="month">month</option>
+          <option value="year">year</option>
+        </select>
+      </label>
+      <p class="sub">Current step: <span id="step-label">hour</span></p>
+      <h2>Transits</h2>
+      <p class="lead">Against the open chart, at its place and zone.</p>
+      <div class="row"><button type="button" id="tr-now">Transits now</button></div>
+      <div class="split four">
+        <label>Year <input id="tr-year" inputmode="numeric"></label>
+        <label>Month <input id="tr-mon" inputmode="numeric"></label>
+        <label>Day <input id="tr-day" inputmode="numeric"></label>
+        <label>Hour <input id="tr-hour" inputmode="numeric"></label>
+      </div>
+      <div class="split">
+        <label>AM/PM <select id="tr-ap"><option>AM</option><option>PM</option></select></label>
+        <label>Min <input id="tr-min" inputmode="numeric" value="0"></label>
+      </div>
+      <button type="button" id="tr-chosen">Transits at this moment</button>
+    </section>
+
+    <section data-screen="slots" hidden>
+      <h1>Slots</h1>
+      <p class="lead">Ten charts. Copy the open chart in, open one, or run synastry against it.</p>
+      <div id="slots" class="stack"></div>
+    </section>
+
+    <section data-screen="return" hidden>
+      <h1>Solar return</h1>
+      <p class="lead">The Sun’s return to its natal longitude in the year you choose. Same place and zone as the open chart.</p>
+      <label>Year <input id="sr-year" inputmode="numeric" min="1800" max="2399"></label>
+      <button type="button" id="sr-go">Calculate return</button>
+    </section>
+
+    <section data-screen="releasing" hidden>
+      <h1>Zodiacal releasing</h1>
+      <p class="lead"><span id="zr-lot">Lot of Fortune</span> · layer <span id="zr-layer">year</span></p>
+      <div class="row">
+        <button type="button" id="zr-switch">Switch lot</button>
+        <button type="button" id="zr-out">Outer layer</button>
+        <button type="button" id="zr-in">Inner layer</button>
+        <button type="button" id="zr-prev">Previous period</button>
+        <button type="button" id="zr-next">Next period</button>
+      </div>
+      <div id="zr" class="zr"></div>
+    </section>
+
+    <section data-screen="library" hidden>
+      <h1>Library</h1>
+      <p class="lead">Collections stand in for chart directories. Nothing leaves the device unless you share.</p>
+      <label>Collection <input id="lib-folder" value="charts" maxlength="60"></label>
+      <button type="button" id="lib-save">Save open chart</button>
+      <div id="library" class="stack"></div>
+    </section>
+
+    <section data-screen="config" hidden>
+      <h1>Config</h1>
+      <p class="lead">The form as it stands becomes the default next time this WebXDC opens. Panels follow the toggles on the chart screen.</p>
+      <div class="row">
+        <button type="button" id="cfg-save">Save as default</button>
+        <button type="button" id="cfg-cancel">Cancel</button>
+      </div>
+    </section>
+
+    <section data-screen="about" hidden>
+      <h1>About</h1>
+      <p>Copyright (C) 2026 yam lynn</p>
+      <p>astro by sweetpotatopress<br>
+        <a href="https://github.com/sweetpotatopress/astro">github.com/sweetpotatopress/astro</a><br>
+        <a href="https://sweetpotato.press">sweetpotato.press</a></p>
+      <p>This port: <a href="https://github.com/AETHER-ENGINEERS/astro-webxdc-for-vector">AETHER-ENGINEERS/astro-webxdc-for-vector</a></p>
+      <p>GNU Affero General Public License 3.0. See the <code>LICENSE</code> file in the repository and <a href="https://www.gnu.org/licenses/agpl-3.0.html">gnu.org/licenses/agpl-3.0.html</a>.</p>
+      <p>Swiss Ephemeris by Astrodienst, used under the AGPL option of its dual license. <a href="https://github.com/aloistr/swisseph">github.com/aloistr/swisseph</a></p>
+      <p>No warranty. The app computes positions. It does not give advice and accepts no liability for interpretations.</p>
+      <p class="muted">Whole-sign cusps, because that is the house call in astro 0.76.4. Packed files sepl_18.se1 and semo_18.se1 cover 1800–2399. No city database. No network.</p>
+    </section>
+  </main>
+
+  <nav class="nav">
+    <button type="button" data-go="chart">Chart</button>
+    <button type="button" data-go="form">Input</button>
+    <button type="button" data-go="time">Time</button>
+    <button type="button" data-go="slots">Slots</button>
+    <button type="button" id="more-open">More</button>
+  </nav>
+  <div id="more-sheet" class="sheet" hidden>
+    <button type="button" data-go="return">Solar return</button>
+    <button type="button" data-go="releasing">Releasing</button>
+    <button type="button" data-go="library">Library</button>
+    <button type="button" data-go="config">Config</button>
+    <button type="button" data-go="about">About</button>
+  </div>
+
+  <script>
+    if (!window.webxdc) {
+      window.webxdc = {
+        sendUpdate: function () {},
+        sendToChat: function () { return Promise.reject(new Error("not in a messenger")); }
+      };
+    }
+  </script>
+  <script src="vendor/moment.min.js"></script>
+  <script src="vendor/moment-timezone-with-data.min.js"></script>
+  <script src="src/lmt.js"></script>
+  <script src="swe.js"></script>
+  <script src="src/engine.js"></script>
+  <script src="src/store.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
