@@ -131,15 +131,53 @@
     return false;
   }
 
-  function sampleOffsets(zone, year) {
+  function periodsTouchingYear(zone, year) {
     var z = root.moment.tz.zone(zone);
-    var set = {};
-    var list = [];
-    for (var m = 0; m < 12; m++) {
-      var off = z.utcOffset(Date.UTC(year, m, 15, 12, 0, 0));
-      if (!set[off]) { set[off] = 1; list.push(off); }
+    var start = Date.UTC(year, 0, 1);
+    var end = Date.UTC(year + 1, 0, 1);
+    var rows = [];
+    for (var i = 0; i < z.untils.length; i++) {
+      var periodStart = i === 0 ? -8640000000000000 : z.untils[i - 1];
+      var periodEnd = z.untils[i];
+      if (!(periodEnd > start && periodStart < end)) continue;
+      var probe = periodStart + 3600000;
+      if (probe < start) probe = start + 3600000;
+      if (probe >= periodEnd) probe = periodStart + 1000;
+      if (!(probe >= periodStart && probe < periodEnd)) continue;
+      var m = root.moment.unix(Math.floor(probe / 1000)).tz(zone);
+      if (!m.isValid()) continue;
+      rows.push({ start: periodStart, end: periodEnd, off: m.utcOffset(), dst: !!m.isDST() });
     }
-    return list;
+    return rows;
+  }
+
+  function chooseOffset(zone, year, mon, day, wantDst) {
+    var rows = periodsTouchingYear(zone, year);
+    var wall = Date.UTC(year, mon - 1, day, 12, 0, 0);
+    var natural = null;
+    for (var i = 0; i < rows.length; i++) {
+      if (wall >= rows[i].start && wall < rows[i].end) natural = rows[i];
+    }
+    var pool = [];
+    for (var j = 0; j < rows.length; j++) {
+      if (rows[j].dst === wantDst) pool.push(rows[j]);
+    }
+    if (!pool.length) {
+      if (natural) return natural.off;
+      return root.moment.tz({ year: year, month: mon - 1, day: day, hour: 12 }, zone).utcOffset();
+    }
+    if (natural && natural.dst === wantDst) return natural.off;
+    var best = pool[0];
+    var bestDist = Infinity;
+    var yearStart = Date.UTC(year, 0, 1);
+    for (var k = 0; k < pool.length; k++) {
+      var mid = pool[k].start;
+      if (mid < yearStart) mid = yearStart;
+      mid = mid + Math.min(15 * 86400000, Math.max(0, pool[k].end - mid) / 2);
+      var dist = Math.abs(mid - wall);
+      if (dist < bestDist) { bestDist = dist; best = pool[k]; }
+    }
+    return best.off;
   }
 
   function civilToUnix(input) {
@@ -153,8 +191,7 @@
       if (!m.isValid()) throw new Error("That local time does not exist in " + zone);
       return { unix: m.unix(), gmtoff: m.utcOffset() * 60 };
     }
-    var offs = sampleOffsets(zone, y);
-    var want = input.isdst > 0 ? Math.max.apply(null, offs) : Math.min.apply(null, offs);
+    var want = chooseOffset(zone, y, mo, d, input.isdst > 0);
     var asUtc = Date.UTC(y, mo - 1, d, h, mi, s);
     return { unix: Math.round((asUtc - want * 60 * 1000) / 1000), gmtoff: want * 60 };
   }
@@ -556,7 +593,10 @@
     var phase = (elong / 45) | 0;
     if (phase > 7) phase = 7;
     var dig = dignities(bodies, lot.sect);
-    var now = unixToLocal(Math.floor(Date.now() / 1000), work.timezone);
+    var asOf = input.profectionAsOf;
+    var now = (asOf && asOf.year && asOf.mon)
+      ? { year: asOf.year | 0, mon: asOf.mon | 0, mday: asOf.mday | 0 }
+      : unixToLocal(Math.floor(Date.now() / 1000), work.timezone);
     var prof = profection(bodies, work.year, work.mon, now);
     var pub = bodies.map(publicBody);
     pub[SE_MEAN_NODE].meanNodeLongitude = meanNodeRaw;
@@ -577,6 +617,7 @@
       utc: when.utc,
       wday: when.wday,
       lmt: when.lmt,
+      profectionAsOf: { year: now.year, mon: now.mon, mday: now.mday || 1 },
       gmtoff: when.gmtoff,
       cusps: hw.cusps.slice(1),
       signCusps: hw.cusps.slice(1),
@@ -780,10 +821,6 @@
     };
   }
 
-  function elementName(el) {
-    return { 2: "fire", 3: "earth", 4: "air", 5: "water" }[el] || "";
-  }
-
   async function loadFile(url) {
     var res = await fetch(url);
     if (!res.ok) throw new Error("Missing ephemeris file " + url);
@@ -851,7 +888,6 @@
     months: MONTHS,
     week: WEEK,
     shortName: SHORT,
-    elementName: elementName,
     bodyMeta: BODY_META,
     layerName: LAYER_NAME,
     EMPTY: EMPTY,

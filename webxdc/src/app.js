@@ -75,6 +75,8 @@
   }
 
   function cloneInput(input) {
+    if (input == null) return input;
+    if (typeof structuredClone === "function") return structuredClone(input);
     return JSON.parse(JSON.stringify(input));
   }
 
@@ -131,11 +133,17 @@
   }
 
   function fmtLon(lon) {
-    var sign = E().signs[((lon / 30) | 0) + 1] || "";
-    var deg = (lon % 30);
+    var n = Number(lon);
+    if (!isFinite(n)) n = 0;
+    n = n % 360;
+    if (n < 0) n += 360;
+    var sign = (n / 30) | 0;
+    if (sign > 11) sign = 11;
+    var name = E().signs[sign + 1] || "";
+    var deg = n % 30;
     var d = deg | 0;
     var m = ((deg - d) * 60) | 0;
-    return d + "°" + pad(m) + "′ " + sign;
+    return d + "°" + pad(m) + "′ " + name;
   }
 
   function fmtDeg(lon) {
@@ -221,15 +229,11 @@
       var a1 = pt(start, 248, asc);
       parts.push('<line x1="' + a0[0].toFixed(1) + '" y1="' + a0[1].toFixed(1) + '" x2="' + a1[0].toFixed(1) + '" y2="' + a1[1].toFixed(1) + '" class="tick"/>');
       var g = pt(mid, 270, asc);
-      var sign = ((start / 30) | 0) % 12;
-      if (sign < 0) sign += 12;
-      var meta = E().elementName([2, 3, 4, 5][sign % 4] ? chart.bodies[0].element : 2);
-      var element = [2, 3, 4, 5][sign % 4];
-      /* sign index from absolute longitude, not from house 1 */
       var absSign = ((norm(start) / 30) | 0) + 1;
-      element = [0, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5][absSign];
+      if (absSign < 1) absSign = 1;
+      if (absSign > 12) absSign = 12;
+      var element = [0, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5][absSign];
       parts.push('<text x="' + g[0].toFixed(1) + '" y="' + g[1].toFixed(1) + '" class="glyph ' + elClass(element) + '" text-anchor="middle" dominant-baseline="middle">' + E().signGlyph[absSign] + '</text>');
-      meta = meta;
     }
     for (var h = 0; h < 12; h++) {
       var c0 = pt(chart.cusps[h], 248, asc);
@@ -268,7 +272,8 @@
     var adj = spread(use.map(function (b) { return b.longitude; }));
     var radii = stackRadii(adj, radius);
     use.forEach(function (b, i) {
-      var p = pt(adj[i], radii[i], chart === state.overlay ? state.chart.asc : chart.asc);
+      var ascFor = (chart === state.overlay && state.chart) ? state.chart.asc : chart.asc;
+      var p = pt(adj[i], radii[i], ascFor);
       var cls = "body " + elClass(b.element) + (ghost ? " ghost" : "");
       var mark = b.station === 1 ? " SR" : b.station === 2 ? " SD" : (b.retrograde && i !== 11 ? " R" : "");
       parts.push('<text x="' + p[0].toFixed(1) + '" y="' + p[1].toFixed(1) + '" class="' + cls + '" text-anchor="middle" dominant-baseline="middle">' + b.glyph + mark + '</text>');
@@ -559,12 +564,70 @@
 
   function stopPlay() {
     state.playing = false;
-    if (playTimer) clearInterval(playTimer);
+    if (playTimer) clearTimeout(playTimer);
     playTimer = 0;
   }
 
   function motionReduced() {
     return !!state.reduceMotion;
+  }
+
+  function schedulePlay() {
+    if (!state.playing || motionReduced()) return;
+    playTimer = setTimeout(function () {
+      playTimer = 0;
+      if (!state.playing) return;
+      stepBy(1).then(schedulePlay);
+    }, 700);
+  }
+
+  function togglePlay() {
+    if (state.playing) { stopPlay(); paint(); return; }
+    if (!state.chart || motionReduced()) return;
+    stopLive();
+    state.playing = true;
+    paint();
+    schedulePlay();
+  }
+
+  function stopLive() {
+    state.live = false;
+    if (liveTimer) clearTimeout(liveTimer);
+    liveTimer = 0;
+  }
+
+  function liveTick() {
+    if (!state.live || frameLock) return Promise.resolve();
+    var input = cloneInput(state.input);
+    var zone = input.timezone || guessZone();
+    var now = E().nowInZone(zone);
+    input.year = now.year; input.mon = now.mon; input.mday = now.mday;
+    input.hour = now.hour24; input.min = now.min; input.sec = now.sec; input.isdst = -1;
+    frameLock = true;
+    return draw(input, { stay: true, frame: true, keepCache: true }).then(function () {
+      frameLock = false;
+    }, function (err) {
+      frameLock = false;
+      throw err;
+    });
+  }
+
+  function scheduleLive() {
+    if (!state.live || motionReduced()) return;
+    liveTimer = setTimeout(function () {
+      liveTimer = 0;
+      if (!state.live) return;
+      liveTick().then(scheduleLive);
+    }, 1000);
+  }
+
+  function toggleLive() {
+    if (state.live) { stopLive(); paint(); return; }
+    if (motionReduced()) return;
+    stopPlay();
+    state.live = true;
+    paint();
+    liveTick().then(scheduleLive);
   }
 
   function bindMotion() {
@@ -581,45 +644,6 @@
     apply();
     if (mq.addEventListener) mq.addEventListener("change", apply);
     else if (mq.addListener) mq.addListener(apply);
-  }
-
-  function togglePlay() {
-    if (state.playing) { stopPlay(); paint(); return; }
-    if (!state.chart || motionReduced()) return;
-    stopLive();
-    state.playing = true;
-    paint();
-    playTimer = setInterval(function () { stepBy(1); }, 700);
-  }
-
-  function stopLive() {
-    state.live = false;
-    if (liveTimer) clearInterval(liveTimer);
-    liveTimer = 0;
-  }
-
-  function toggleLive() {
-    if (state.live) { stopLive(); paint(); return; }
-    if (motionReduced()) return;
-    stopPlay();
-    state.live = true;
-    paint();
-    var tick = async function () {
-      if (!state.live || frameLock) return;
-      var input = cloneInput(state.input);
-      var zone = input.timezone || guessZone();
-      var now = E().nowInZone(zone);
-      input.year = now.year; input.mon = now.mon; input.mday = now.mday;
-      input.hour = now.hour24; input.min = now.min; input.sec = now.sec; input.isdst = -1;
-      frameLock = true;
-      try {
-        await draw(input, { stay: true, frame: true, keepCache: true });
-      } finally {
-        frameLock = false;
-      }
-    };
-    tick();
-    liveTimer = setInterval(tick, 1000);
   }
 
   async function copySlot(i) {
@@ -707,6 +731,7 @@
     rec.id = uid();
     rec.collection = collection;
     rec.savedAt = Date.now();
+    if (state.chart.profectionAsOf) rec.profectionAsOf = cloneInput(state.chart.profectionAsOf);
     await Store().saveChart(rec);
     state.library.push(rec);
     state.note = "Saved into " + collection + ".";
@@ -734,11 +759,18 @@
     return new Blob([text], { type: "image/svg+xml" });
   }
 
+  function shareFileName(name) {
+    var base = String(name == null ? "" : name).replace(/\0/g, "");
+    base = base.split(/[^A-Za-z0-9]+/).filter(Boolean).join("-");
+    if (!base) base = "chart";
+    return base.slice(0, 80) + ".svg";
+  }
+
   async function shareChart(chart) {
     var text = summaryText(chart);
     var blob = svgBlob();
     var payload = { text: text };
-    if (blob) payload.file = { name: (chart.input.name || "chart").replace(/\s+/g, "-") + ".svg", data: blob };
+    if (blob) payload.file = { name: shareFileName(chart.input.name), data: blob };
     try {
       if (globalThis.webxdc && typeof webxdc.sendToChat === "function") {
         await webxdc.sendToChat(payload);

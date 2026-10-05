@@ -12,7 +12,7 @@ Upstream is astro 0.76.4 (`160849748aa0e54adf864e239f3381a9f945263b`). The C sou
 | Main wheel | Chart. SVG, element colors, whole-sign cusp ring, planet ring. Glyphs use the same angular separation pass as `planet_pos`, then stack inward if two are still within 8°. |
 | Ascendant on the wheel | True ascendant is the left horizon. Zodiac longitude increases clockwise, as in `draw.c`. The terminal ellipse is a character grid; this wheel is round. |
 | `o` right table | Show/hide sky. Chart meta (also drawn by `cc_data` on the terminal), moon-phase lives on the left with the terminal, eclipses and station days match `right_table`. |
-| `p` left table | Show/hide positions. Longitudes, dignities, moon phase, profection. |
+| `p` left table | Show/hide positions. Longitudes, dignities, moon phase, profection. A live draw uses the clock, as `set_localtime` does. Saving a chart keeps that date, so opening it again shows the same profection. |
 | `r` redraw | Redraw. |
 | `R` redraw from config | Opening the app fills the form from the saved default. Config → Save as default writes it. |
 | Enter, animation mode | Time → Animate. The current wheel and tables stay painted while the next positions are computed, then they swap once. No full-width status between frames. `prefers-reduced-motion: reduce` disables Animate and the live clock; Step back and Step forward still move one step. |

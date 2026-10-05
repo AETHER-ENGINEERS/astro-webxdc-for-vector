@@ -58,6 +58,24 @@
     return tx(store, "readonly").then(function (os) { return reqToPromise(os.get(key)); });
   }
 
+  function pruneTz(max) {
+    var cutoff = Date.now() - 30 * 86400000;
+    return getAll("tzcache").then(function (rows) {
+      rows = rows || [];
+      var drop = [];
+      var keep = [];
+      for (var i = 0; i < rows.length; i++) {
+        if (!rows[i].at || rows[i].at < cutoff) drop.push(rows[i]);
+        else keep.push(rows[i]);
+      }
+      keep.sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+      if (keep.length > max) drop = drop.concat(keep.slice(max));
+      return Promise.all(drop.map(function (row) { return del("tzcache", row.key); }));
+    });
+  }
+
+  var tzPruneQueued = false;
+
   root.AstroStore = {
     open: open,
     charts: function () { return getAll("charts"); },
@@ -69,6 +87,12 @@
     saveSlot: function (slot, input) { return put("slots", { slot: slot, input: input }); },
     clearSlot: function (slot) { return del("slots", slot); },
     tzGet: function (key) { return get("tzcache", key); },
-    tzPut: function (key, value) { return put("tzcache", { key: key, value: value, at: Date.now() }); }
+    tzPut: function (key, value) {
+      return put("tzcache", { key: key, value: value, at: Date.now() }).then(function () {
+        if (tzPruneQueued) return;
+        tzPruneQueued = true;
+        return pruneTz(500).then(function () { tzPruneQueued = false; }, function () { tzPruneQueued = false; });
+      });
+    }
   };
 })(typeof globalThis !== "undefined" ? globalThis : this);
