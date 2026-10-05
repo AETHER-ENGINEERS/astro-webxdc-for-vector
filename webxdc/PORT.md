@@ -15,10 +15,10 @@ Upstream is astro 0.76.4 (`160849748aa0e54adf864e239f3381a9f945263b`). The C sou
 | `p` left table | Show/hide positions. Longitudes, dignities, moon phase, profection. |
 | `r` redraw | Redraw. |
 | `R` redraw from config | Opening the app fills the form from the saved default. Config → Save as default writes it. |
-| Enter, animation mode | Time → Animate. |
+| Enter, animation mode | Time → Animate. The current wheel and tables stay painted while the next positions are computed, then they swap once. No full-width status between frames. `prefers-reduced-motion: reduce` disables Animate and the live clock; Step back and Step forward still move one step. |
 | `k` / `j` or arrows, step time | Step back / Step forward. |
 | `h` / `l`, change the time increment | Step size menu (second, minute, hour, day, month, year). |
-| Tab, live clock | Live clock. |
+| Tab, live clock | Live clock. Same reduced-motion rule as Animate. |
 | `d` DST | DST. Cycles auto → on → off. The terminal only flips 0 and 1, and a press does nothing while `isdst` is still −1. The cycle keeps the auto state reachable. |
 | `0`–`9` select chart | Slots → Open. Slot 0 is a real slot. Upstream stores key `0` at chart index 10 because `ui->cc <= 0` is rewritten; the ten buttons are the keybind’s slots. |
 | Alt+`0`–`9` synastry | Slots → Synastry. Inner glyphs are the other chart, rotated to the open chart’s ascendant. |

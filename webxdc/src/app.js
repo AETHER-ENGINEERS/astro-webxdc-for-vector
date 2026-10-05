@@ -25,6 +25,8 @@
     aspects: true,
     error: "",
     note: "",
+    frameStatus: "",
+    reduceMotion: false,
     zrLot: "fortune",
     zrLayer: 0,
     zrSel: [0, 0, 0, 0],
@@ -36,6 +38,7 @@
   };
   var playTimer = 0;
   var liveTimer = 0;
+  var frameLock = false;
 
   function emptyInput() {
     return {
@@ -342,6 +345,8 @@
     el("err").hidden = !state.error;
     el("note").textContent = state.note;
     el("note").hidden = !state.note;
+    el("frame-status").textContent = state.frameStatus || "";
+    el("frame-status").hidden = !state.frameStatus;
     el("ready-flag").textContent = state.ready ? "" : "Loading Swiss Ephemeris…";
     el("draw").disabled = !state.ready;
     el("fixture").disabled = !state.ready;
@@ -349,9 +354,12 @@
 
   function paintChart() {
     var host = el("wheel-host");
-    host.innerHTML = state.chart ? wheelSvg(state.chart, state.overlay) : '<p class="empty">No chart yet. Draw one, or run the fixture.</p>';
-    el("left-panel").innerHTML = state.left && state.chart ? leftPanel(state.chart) : "";
-    el("right-panel").innerHTML = state.right && state.chart ? rightPanel(state.chart) : "";
+    var wheel = state.chart ? wheelSvg(state.chart, state.overlay) : '<p class="empty">No chart yet. Draw one, or run the fixture.</p>';
+    var left = state.left && state.chart ? leftPanel(state.chart) : "";
+    var right = state.right && state.chart ? rightPanel(state.chart) : "";
+    host.innerHTML = wheel;
+    el("left-panel").innerHTML = left;
+    el("right-panel").innerHTML = right;
     el("left-panel").hidden = !state.left;
     el("right-panel").hidden = !state.right;
     el("overlay-note").textContent = state.overlay
@@ -440,7 +448,9 @@
     if (state.screen === "releasing") paintReleasing();
     el("step-label").textContent = state.step;
     el("play").textContent = state.playing ? "Stop" : "Animate";
+    el("play").disabled = !!state.reduceMotion;
     el("live").textContent = state.live ? "Live on" : "Live clock";
+    el("live").disabled = !!state.reduceMotion;
     el("toggle-left").textContent = state.left ? "Hide positions" : "Show positions";
     el("toggle-right").textContent = state.right ? "Hide sky" : "Show sky";
     el("toggle-asp").textContent = state.aspects ? "Hide aspects" : "Show aspects";
@@ -455,10 +465,15 @@
 
   async function draw(input, opts) {
     opts = opts || {};
-    setError("");
-    state.note = "Calculating…";
-    paintChrome();
-    await yieldNow();
+    var frame = !!opts.frame && !!state.chart;
+    if (!frame) {
+      state.error = "";
+      if (!state.chart) {
+        state.frameStatus = "Working";
+        paintChrome();
+        await yieldNow();
+      }
+    }
     try {
       var prev = opts.keepCache ? state.chart : null;
       var chart = E().compute(input, prev);
@@ -469,11 +484,15 @@
         state.overlayKind = "";
       }
       writeForm(state.input);
+      state.frameStatus = "";
+      state.error = "";
       state.note = "";
       cacheTz(state.input, chart);
       if (!opts.stay) go("chart");
       else paint();
     } catch (err) {
+      if (frame) { stopPlay(); stopLive(); }
+      state.frameStatus = "";
       state.note = "";
       setError(err.message || String(err));
       paint();
@@ -523,9 +542,19 @@
   }
 
   async function stepBy(dir) {
-    if (!state.chart) return;
-    var next = E().step(state.input, state.step, dir);
-    await draw(next, { stay: true, keepCache: state.step !== "month" && state.step !== "year", keepOverlay: false });
+    if (!state.chart || frameLock) return;
+    frameLock = true;
+    try {
+      var next = E().step(state.input, state.step, dir);
+      await draw(next, {
+        stay: true,
+        frame: true,
+        keepCache: state.step !== "month" && state.step !== "year",
+        keepOverlay: false
+      });
+    } finally {
+      frameLock = false;
+    }
   }
 
   function stopPlay() {
@@ -534,9 +563,29 @@
     playTimer = 0;
   }
 
+  function motionReduced() {
+    return !!state.reduceMotion;
+  }
+
+  function bindMotion() {
+    state.reduceMotion = false;
+    if (!globalThis.matchMedia) return;
+    var mq = globalThis.matchMedia("(prefers-reduced-motion: reduce)");
+    var apply = function () {
+      state.reduceMotion = !!mq.matches;
+      if (state.reduceMotion) {
+        stopPlay();
+        stopLive();
+      }
+    };
+    apply();
+    if (mq.addEventListener) mq.addEventListener("change", apply);
+    else if (mq.addListener) mq.addListener(apply);
+  }
+
   function togglePlay() {
     if (state.playing) { stopPlay(); paint(); return; }
-    if (!state.chart) return;
+    if (!state.chart || motionReduced()) return;
     stopLive();
     state.playing = true;
     paint();
@@ -551,16 +600,23 @@
 
   function toggleLive() {
     if (state.live) { stopLive(); paint(); return; }
+    if (motionReduced()) return;
     stopPlay();
     state.live = true;
     paint();
     var tick = async function () {
+      if (!state.live || frameLock) return;
       var input = cloneInput(state.input);
       var zone = input.timezone || guessZone();
       var now = E().nowInZone(zone);
       input.year = now.year; input.mon = now.mon; input.mday = now.mday;
       input.hour = now.hour24; input.min = now.min; input.sec = now.sec; input.isdst = -1;
-      await draw(input, { stay: true, keepCache: true });
+      frameLock = true;
+      try {
+        await draw(input, { stay: true, frame: true, keepCache: true });
+      } finally {
+        frameLock = false;
+      }
     };
     tick();
     liveTimer = setInterval(tick, 1000);
@@ -858,6 +914,7 @@
     document.body.addEventListener("click", onClick);
     document.body.addEventListener("keydown", onKey);
     document.body.addEventListener("change", changeStep);
+    bindMotion();
     paint();
     try {
       var cfg = await Store().config();
